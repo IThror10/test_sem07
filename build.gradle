@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'io.spring.dependency-management' version "1.0.11.RELEASE"
+}
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    archiveBaseName.set('TermPediaProject')
+    archiveVersion.set('0.0.1')
+    archiveClassifier.set('SNAPSHOT')
+    manifest {
+        attributes "Main-Class": "TermPedia.Main"
+    }
+}
+
+run.standardInput = System.in
+run.configure {
+    environment "QueryFactory", queryDBMS
+    environment "CommandFactory", commandDBMS
+}
+
+application {
+    mainClass = 'TermPedia.Main'
+}
+
+
+
+def blModule = project(':modules:BL')
+def dbModule = project(':modules:DB')
+def guiModule = project(':modules:GUI')
+
+configure([blModule, dbModule, guiModule]) {
+    apply(plugin: 'java')
+    apply(plugin: 'idea')
+    apply(plugin: 'io.spring.dependency-management')
+
+    sourceCompatibility = JavaVersion.VERSION_18
+
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:2.5.4'
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.jetbrains:annotations:23.0.0'
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}
+
+configure(dbModule) {
+    dependencies {
+        implementation postgresVersion
+        implementation project(':modules:BL')
+    }
+}
+
+configure(guiModule) {
+    dependencies {
+        implementation project(':modules:BL')
+    }
+}
+
+dependencies {
+    implementation project(':modules:BL')
+    implementation project(':modules:DB')
+    implementation project(':modules:GUI')
+}

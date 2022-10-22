@@ -1,0 +1,203 @@
+// Downloading drivers
+task downloadPostgresDriver(type: dbTasks.DownloadDriver) {
+    buildDrivers = configurations.driver
+    driverName = postgresDriver
+}
+task downloadMsSqlDriver(type: dbTasks.DownloadDriver) {
+    buildDrivers = configurations.driver
+    driverName = mssqlDriver
+}
+
+// Command DB Tasks
+task createPostgresCommandDB(type: dbTasks.CreatePostgresDB, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+
+    DBName = commandDBName
+}
+
+task initPostgresCommandDB(type: dbTasks.ExecutePostgresScripts, dependsOn: createPostgresCommandDB) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+    dataBase = commandDBName
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["postgresInit.sql", "postgresFunctions.sql", "postgresRoles.sql", "testInsert.sql"]
+}
+
+task dropPostgresCommandDB(type: dbTasks.ExecutePostgresScripts, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+    dataBase = null
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["postgresDrop.sql"]
+}
+
+// Test Command DB Tasks
+task createTestPostgresCommandDB(type: dbTasks.CreatePostgresDB, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+
+    DBName = "Test" + commandDBName
+}
+
+task initTestPostgresCommandDB(type: dbTasks.ExecutePostgresScripts, dependsOn: createTestPostgresCommandDB) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+    dataBase = "Test" + commandDBName
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["postgresInit.sql", "postgresFunctions.sql", "postgresTestRoles.sql", "testInsert.sql"]
+}
+
+task dropTestPostgresCommandDB(type: dbTasks.ExecutePostgresScripts, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+    dataBase = null
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["postgresTestDrop.sql"]
+}
+
+// Query DB Tasks
+task createPostgresQueryDB(type: dbTasks.CreatePostgresDB, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+
+    DBName = queryDBName
+}
+
+task initPostgresQueryDB(type: dbTasks.ExecutePostgresScripts, dependsOn: createPostgresQueryDB) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+
+    dataBase = queryDBName
+    inputDir = "$projectDir/src/main/sql/queryDB"
+    inputFiles = ["postgresInit.sql", "postgresFunctions.sql", "postgresProcedures.sql",
+                  "postgresRoles.sql"]
+}
+
+task dropPostgresQueryDB(type: dbTasks.ExecutePostgresScripts, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+    dataBase = null
+
+    inputDir = "$projectDir/src/main/sql/queryDB"
+    inputFiles = ["postgresDrop.sql"]
+}
+
+// Test Query DB Tasks
+task createTestPostgresQueryDB(type: dbTasks.CreatePostgresDB, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+
+    DBName = "Test" + queryDBName
+}
+
+task initTestPostgresQueryDB(type: dbTasks.ExecutePostgresScripts, dependsOn: createTestPostgresQueryDB) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+
+    dataBase = "Test" + queryDBName
+    inputDir = "$projectDir/src/main/sql/queryDB"
+    inputFiles = ["postgresInit.sql", "postgresFunctions.sql", "postgresProcedures.sql",
+                  "postgresTestRoles.sql", "postgresTestInsert.sql"]
+}
+
+task dropTestPostgresQueryDB(type: dbTasks.ExecutePostgresScripts, dependsOn: downloadPostgresDriver) {
+    url = postgresUrl
+    username = postgresUsername
+    password = postgresPassword
+    driver = postgresDriver
+    dataBase = null
+
+    inputDir = "$projectDir/src/main/sql/queryDB"
+    inputFiles = ["postgresTestDrop.sql"]
+}
+
+// MsSql Command DB
+task createMsSqlCommandDB(type: dbTasks.CreateMsSqlDB, dependsOn: downloadMsSqlDriver) {
+    url = mssqlUrl
+    username = mssqlUsername
+    password = mssqlPassword
+    driver = mssqlDriver
+
+    DBName = commandDBName
+}
+
+task initMsSqlCommandDB(type: dbTasks.ExecuteMsSqlScripts, dependsOn: createMsSqlCommandDB) {
+    url = mssqlUrl
+    username = mssqlUsername
+    password = mssqlPassword
+    driver = mssqlDriver
+    dataBase = commandDBName
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["mssqlInit.sql", "mssqlFunctions.sql","testInsert.sql"]
+}
+
+task dropMsSqlCommandDB(type: dbTasks.ExecuteMsSqlScripts, dependsOn: downloadMsSqlDriver) {
+    url = mssqlUrl
+    username = mssqlUsername
+    password = mssqlPassword
+    driver = mssqlDriver
+    dataBase = null
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["mssqlDrop.sql"]
+}
+
+// Test Command DB MsSql Tasks
+task createTestMsSqlCommandDB(type: dbTasks.CreateMsSqlDB, dependsOn: downloadPostgresDriver) {
+    url = mssqlUrl
+    username = mssqlUsername
+    password = mssqlPassword
+    driver = mssqlDriver
+
+    DBName = "Test" + commandDBName
+}
+
+task initTestMsSqlCommandDB(type: dbTasks.ExecuteMsSqlScripts, dependsOn: createTestMsSqlCommandDB) {
+    url = mssqlUrl
+    username = mssqlUsername
+    password = mssqlPassword
+    driver = mssqlDriver
+    dataBase = "Test" + commandDBName
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["mssqlInit.sql", "mssqlFunctions.sql","testInsert.sql"]
+}
+
+task dropTestMsSqlCommandDB(type: dbTasks.ExecuteMsSqlScripts, dependsOn: downloadPostgresDriver) {
+    url = mssqlUrl
+    username = mssqlUsername
+    password = mssqlPassword
+    driver = mssqlDriver
+    dataBase = null
+
+    inputDir = "$projectDir/src/main/sql/commandDB"
+    inputFiles = ["mssqlTestDrop.sql"]
+}

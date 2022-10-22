@@ -1,0 +1,4 @@
+test {
+    environment "QueryFactory", "Mock"
+    environment "CommandFactory", "Mock"
+}
