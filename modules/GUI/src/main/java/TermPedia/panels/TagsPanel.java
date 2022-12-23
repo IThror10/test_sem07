@@ -47,8 +47,8 @@ public class TagsPanel extends javax.swing.JPanel {
             if (tag == null)
                 return;
 
-            AddTagToTermEvent event = new AddTagToTermEvent(term.name, tag.name, uid);
             try {
+                AddTagToTermEvent event = new AddTagToTermEvent(term.name, tag.name, uid);
                 EventHandler handler = new EventHandler();
                 handler.handle(event);
                 if (event.getResult().getStatus())

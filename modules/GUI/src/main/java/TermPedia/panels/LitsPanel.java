@@ -37,6 +37,13 @@ public class LitsPanel extends javax.swing.JPanel {
         this.width = _width;
         this.height = _height;
 
+        TagBook temp;
+        try {
+            temp = new TagBook("Add New", "<<Type>>", 0, new Vector<>(), 0);
+        } catch (ActionsException e) {
+            temp = null;
+        }
+        TagBook addNew = temp;
 
         JList<RatedBook> jList;
         JSlider slider;
@@ -64,7 +71,6 @@ public class LitsPanel extends javax.swing.JPanel {
             }
 
             JComboBox<TagBook> comboBox = new JComboBox<>(query.getResult().getBooks());
-            TagBook addNew = new TagBook("Add New", "<<Type>>", 0, new Vector<>(), 0);
             comboBox.insertItemAt(addNew, 0);
 
             JComponent[] inputs = new JComponent[] {
@@ -80,9 +86,9 @@ public class LitsPanel extends javax.swing.JPanel {
             if (result != JOptionPane.OK_OPTION || comboBox.getSelectedItem() == null)
                 return;
             else if (comboBox.getSelectedIndex() != 0){
-                AddLitToTermEvent event = new AddLitToTermEvent(term.name, (TagBook) comboBox.getSelectedItem(), uid);
                 EventHandler handler = new EventHandler();
                 try {
+                    AddLitToTermEvent event = new AddLitToTermEvent(term.name, (TagBook) comboBox.getSelectedItem(), uid);
                     handler.handle(event);
                     if (event.getResult().getStatus())
                         BaseMessages.successMsg("Literature will be added soon");
@@ -131,9 +137,9 @@ public class LitsPanel extends javax.swing.JPanel {
             GetAuthorsDialog dialog1 = new GetAuthorsDialog();
             Vector<String> authors = dialog1.execute();
 
-            Book book = new Book(bookName, litType, year, authors);
-            AddLitToTermEvent event = new AddLitToTermEvent(term.name, book, uid);
             try {
+                Book book = new Book(bookName, litType, year, authors);
+                AddLitToTermEvent event = new AddLitToTermEvent(term.name, book, uid);
                 EventHandler handler = new EventHandler();
                 handler.handle(event);
                 if (event.getResult().getStatus())

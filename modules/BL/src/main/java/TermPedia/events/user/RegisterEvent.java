@@ -10,7 +10,8 @@ import TermPedia.dto.JsonBuilder;
 
 public class RegisterEvent extends BaseEvent {
     private EventStatus status;
-    public RegisterEvent(@NotNull String login, @NotNull String password, @NotNull String email) throws ActionsException {
+    public RegisterEvent(@NotNull String login, @NotNull String password, @NotNull String email)
+            throws ActionsException {
         super(0);
         status = null;
 
@@ -28,7 +29,7 @@ public class RegisterEvent extends BaseEvent {
     }
 
     @Override
-    public void acceptVisitor(EventVisitor visitor) throws ActionsException {
+    public void acceptVisitor(@NotNull EventVisitor visitor) throws ActionsException {
         visitor.visitRegisterEvent(this);
     }
 

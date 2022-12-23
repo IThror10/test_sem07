@@ -1,47 +1,66 @@
 package TermPedia.factory.query;
 
 import TermPedia.dto.ActionsException;
-import TermPedia.factory.EnvProvider;
-import TermPedia.factory.query.postgres.PostgresQueryFactory;
+import TermPedia.factory.adapters.PostgresAdapter;
+import TermPedia.factory.query.postgres.PostgresAuthorsRequests;
 import TermPedia.queries.instances.authors.FindAuthorByNameQuery;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Vector;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class StatementAuthorsSearcherTest {
+    @Mock
+    Connection connection;
+    @Mock
+    Statement statement;
+    @Mock
+    ResultSet resultSet;
+
     StatementAuthorsSearcherTest() throws Exception {
-        PostgresQueryFactory.completeRegistration();
-        PostgresQueryFactory.setConnectionEstablisher(new TestPostgresQueryConnection());
-        PostgresQueryFactory.setProvider(new EnvProvider());
+        connection = Mockito.mock(Connection.class);
+        statement = Mockito.mock(Statement.class);
+        resultSet = Mockito.mock(ResultSet.class);
+
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.getResultSet()).thenReturn(resultSet);
     }
     @Test
     void getAuthorByName() throws Exception {
-        AuthorsSearcher searcher = QueryFactory.instance().createAuthorSearcher();
+        //Mock
+        when(statement.execute(any(String.class))).thenReturn(true);
+        when(resultSet.next()).thenReturn(true).thenReturn(false).thenReturn(true)
+                .thenReturn(true).thenReturn(true).thenReturn(false);
+        when(resultSet.getString(any(String.class))).thenReturn("ABCD");
 
-        Vector<String> authors1 = searcher.getAuthorByName(
-                new FindAuthorByNameQuery("london", 2, 0)).getAuthors();
-
-        Vector<String> authors2 = searcher.getAuthorByName(new FindAuthorByNameQuery(
-                "d", 3, 0)).getAuthors();
-
-        Vector<String> authors3 = searcher.getAuthorByName(new FindAuthorByNameQuery(
-                "d", 1, 0)).getAuthors();
-
-        assertAll(
-                () -> assertEquals("London J.", authors1.get(0)),
-                () -> assertEquals(1, authors1.size()),
-                () -> assertEquals("ABCD", authors2.get(0)),
-                () -> assertEquals("DEF", authors2.get(1)),
-                () -> assertEquals("London J.", authors2.get(2)),
-                () -> assertEquals(3, authors2.size()),
-                () -> assertEquals("ABCD", authors3.get(0)),
-                () -> assertEquals(1, authors3.size()),
-                () -> assertThrows(ActionsException.class, () -> searcher.getAuthorByName(new FindAuthorByNameQuery(
-                        "London", 0, 10))),
-                () -> assertThrows(ActionsException.class, () -> searcher.getAuthorByName(new FindAuthorByNameQuery(
-                                "London", 10, -10)))
+        //Arrange
+        StatementAuthorsSearcher searcher = new StatementAuthorsSearcher(
+                new PostgresAdapter(connection),
+                new PostgresAuthorsRequests()
         );
+
+        FindAuthorByNameQuery searchLondon = new FindAuthorByNameQuery("london", 2, 0);
+        FindAuthorByNameQuery searchAll = new FindAuthorByNameQuery("d", 4, 0);
+        FindAuthorByNameQuery wrongLimits = new FindAuthorByNameQuery("d", -1, 3);
+
+        //Act
+        Vector<String> londonRes = searcher.getAuthorByName(searchLondon).getAuthors();
+        Vector<String> allRes = searcher.getAuthorByName(searchAll).getAuthors();
+        Executable wrongLimitsException = () -> searcher.getAuthorByName(wrongLimits);
+
+        //Assert
+        assertEquals(1, londonRes.size());
+        assertEquals(3, allRes.size());
+        assertEquals("ABCD", allRes.get(0));
+        assertThrows(ActionsException.class, wrongLimitsException);
     }
 }

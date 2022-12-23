@@ -1,7 +1,7 @@
 package TermPedia.factory.query.postgres;
 
 import TermPedia.dto.ActionsException;
-import TermPedia.factory.adapters.PostgresSearchAdapter;
+import TermPedia.factory.adapters.PostgresAdapter;
 import TermPedia.factory.query.*;
 import TermPedia.factory.query.common.IQueryConnection;
 
@@ -21,7 +21,7 @@ public class PostgresQueryFactory extends SyncQueryFactory {
         try {
             Connection connection = _establisher.establishReaderConnection();
             return new StatementTermsSearcher(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresTermsRequests()
             );
         } catch (Exception e) {
@@ -35,7 +35,7 @@ public class PostgresQueryFactory extends SyncQueryFactory {
         try {
             Connection connection = _establisher.establishReaderConnection();
             return new StatementTagSearcher(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresTagsRequests()
             );
         } catch (Exception e) {
@@ -49,7 +49,7 @@ public class PostgresQueryFactory extends SyncQueryFactory {
         try {
             Connection connection = _establisher.establishReaderConnection();
             return new StatementAuthorsSearcher(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresAuthorsRequests()
             );
         } catch (Exception e) {
@@ -63,7 +63,7 @@ public class PostgresQueryFactory extends SyncQueryFactory {
         try {
             Connection connection = _establisher.establishReaderConnection();
             return new StatementLitTypesSearcher(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresLitTypesRequests()
             );
         } catch (Exception e) {
@@ -77,7 +77,7 @@ public class PostgresQueryFactory extends SyncQueryFactory {
         try {
             Connection connection = _establisher.establishReaderConnection();
             return new StatementBookSearcher(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresBookRequests()
             );
         } catch (Exception e) {
@@ -91,7 +91,7 @@ public class PostgresQueryFactory extends SyncQueryFactory {
         try {
             Connection connection = _establisher.establishUpdaterConnection();
             return new StatementUpdater(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresUpdateRequests()
             );
         } catch (Exception e) {

@@ -11,7 +11,7 @@ public class RatedBook extends Book {
     public int userRating;
 
     public RatedBook(@NotNull String name, @NotNull String type, int year, @NotNull Vector<String> authors,
-                     double rating, int ratesAmount, int userRating) {
+                     double rating, int ratesAmount, int userRating) throws ActionsException {
         super(name, type, year, authors);
         this.rating = rating;
         this.ratesAmount = ratesAmount;
@@ -21,7 +21,7 @@ public class RatedBook extends Book {
     }
 
     public RatedBook(@NotNull String name, @NotNull String type, int year, @NotNull Vector<String> authors,
-                    double rating, int ratesAmount) {
+                    double rating, int ratesAmount) throws ActionsException {
         super(name, type, year, authors);
         this.rating = rating;
         this.ratesAmount = ratesAmount;

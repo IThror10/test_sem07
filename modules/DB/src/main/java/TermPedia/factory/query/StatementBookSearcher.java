@@ -47,8 +47,8 @@ public class StatementBookSearcher implements BookSearcher {
 
     @Override
     public TagBookQueryResult searchByTagName(BaseSearchBookByTagQuery settings) throws ActionsException {
+        String query = builder.anySearchQuery(settings);
         try {
-            String query = builder.anySearchQuery(settings);
             Vector<TagBook> books = new Vector<>(settings.getSearchAmount());
             if (searcher.execute(query))
                 while (searcher.next())
@@ -69,7 +69,7 @@ public class StatementBookSearcher implements BookSearcher {
     }
 
     @Override
-    public BookQueryResult searchByAuthorName(BaseSearchBookByNameQuery settings) throws ActionsException {
+    public BookQueryResult searchByAuthorName(BaseSearchBookByAuthorNameQuery settings) throws ActionsException {
         try {
             String query = builder.authorSearchQuery(settings);
             Vector<Book> books = new Vector<>(settings.getSearchAmount());

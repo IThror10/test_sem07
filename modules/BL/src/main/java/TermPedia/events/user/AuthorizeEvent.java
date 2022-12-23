@@ -9,7 +9,7 @@ import TermPedia.dto.JsonBuilder;
 
 public class AuthorizeEvent extends BaseEvent {
     private User user;
-    public AuthorizeEvent(@NotNull String login, @NotNull String password) {
+    public AuthorizeEvent(@NotNull String login, @NotNull String password) throws ActionsException {
         super(0);
         this.user = null;
         this.eventType = EventType.authorization;
@@ -21,7 +21,7 @@ public class AuthorizeEvent extends BaseEvent {
     }
 
     @Override
-    public void acceptVisitor(EventVisitor visitor) throws ActionsException {
+    public void acceptVisitor(@NotNull EventVisitor visitor) throws ActionsException {
         visitor.visitAuthorizeEvent(this);
     }
 

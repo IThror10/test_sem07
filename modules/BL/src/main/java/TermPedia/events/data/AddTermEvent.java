@@ -14,19 +14,20 @@ public class AddTermEvent extends DataEvent {
         this.eventType = EventType.new_term;
 
         if (term.length() < 2)
-            throw new ActionsException("Слишком короткое имя термина");
+            throw new ActionsException("Term name is too short");
         else if (description.length() < 10)
-            throw new ActionsException("Слишком короткое описание");
-
-        this.term = new Term(term, description);
-        this.data = new JsonBuilder(128)
-                .addStr("Term", term)
-                .addStr("Description", description)
-                .getData();
+            throw new ActionsException("Description is too short");
+        else {
+            this.term = new Term(term, description);
+            this.data = new JsonBuilder(128)
+                    .addStr("Term", term)
+                    .addStr("Description", description)
+                    .getData();
+        }
     }
 
     @Override
-    public void acceptVisitor(EventVisitor visitor) throws ActionsException {
+    public void acceptVisitor(@NotNull EventVisitor visitor) throws ActionsException {
         visitor.visitAddTermEvent(this);
     }
 }

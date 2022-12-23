@@ -3,35 +3,61 @@ package TermPedia.factory.command;
 
 import TermPedia.dto.ActionsException;
 import TermPedia.events.data.AddTermEvent;
-import TermPedia.factory.EnvProvider;
-import TermPedia.factory.command.mssql.MsSqlCommandFactory;
-import TermPedia.factory.command.postgres.PostgresCommandFactory;
+import TermPedia.factory.adapters.PostgresAdapter;
+import TermPedia.factory.command.postgres.PostgresEventHandlerRequests;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
-import java.util.Objects;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class StatementEventHandlerTest {
+    @Mock
+    Connection connection;
+    @Mock
+    Statement statement;
+    @Mock
+    ResultSet resultSet;
+
     StatementEventHandlerTest() throws Exception {
-        PostgresCommandFactory.completeRegistration();
-        PostgresCommandFactory.setConnectionEstablisher(new TestPostgresCommandConnection());
+        connection = Mockito.mock(Connection.class);
+        statement = Mockito.mock(Statement.class);
+        resultSet = Mockito.mock(ResultSet.class);
 
-        MsSqlCommandFactory.completeRegistration();
-        MsSqlCommandFactory.setConnectionEstablisher(new TestMsSqlCommandConnection());
-
-        SyncCommandFactory.setProvider(new EnvProvider());
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.getResultSet()).thenReturn(resultSet);
     }
 
     @Test
     void accept() throws Exception {
-        AddTermEvent event1 = new AddTermEvent("OOP", "Object Oriented", 0);
-        AddTermEvent event2 = new AddTermEvent("Other", "Throw something", -12);
+        //Mock
+        when(statement.execute(any(String.class))).thenReturn(true).thenThrow(SQLException.class);
+        when(resultSet.getBoolean(any(String.class))).thenReturn(true);
 
-        EventHandler handler = CommandFactory.instance().createEventHandler();
-        assertAll(
-                () -> assertEquals(true, handler.accept(event1).getStatus()),
-                () -> assertThrows(ActionsException.class, () -> handler.accept(event2))
+        //Arrange
+        StatementEventHandler handler = new StatementEventHandler(
+                new PostgresAdapter(connection),
+                new PostgresEventHandlerRequests()
         );
+
+        AddTermEvent event1 = new AddTermEvent("OOP", "Object Oriented", 0);
+        AddTermEvent event2 = new AddTermEvent("Other", "Throw something", null);
+
+        //Act
+        boolean result = handler.accept(event1).getStatus();
+        Executable wrongUID = () -> handler.accept(event2);
+
+        //Assert
+        assertTrue(result);
+        assertThrows(ActionsException.class, wrongUID);
     }
 }

@@ -1,71 +1,189 @@
 package TermPedia;
 
-import TermPedia.command.MockCommandFactory;
 import TermPedia.dto.ActionsException;
-import TermPedia.events.data.AddTagToTermEvent;
-import TermPedia.events.data.AddTermEvent;
-import TermPedia.events.user.AuthorizeEvent;
-import TermPedia.events.user.RegisterEvent;
-import TermPedia.events.user.User;
+import TermPedia.dto.Book;
+import TermPedia.dto.Term;
+import TermPedia.events.EventStatus;
+import TermPedia.events.data.*;
+import TermPedia.events.user.*;
 import TermPedia.events.visitors.EventHandlerVisitor;
 import TermPedia.factory.command.CommandFactory;
-import TermPedia.query.MockQueryFactory;
+import TermPedia.factory.command.EventHandler;
+import TermPedia.factory.command.ReqAuthHandler;
+import TermPedia.factory.query.QueryFactory;
+import TermPedia.factory.query.TermsSearcher;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
+import org.mockito.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EventHandlerVisitorTest {
+    @Mock
+    private QueryFactory queryFactory;
+    @Mock
+    private CommandFactory commandFactory;
+
+    MockedStatic<QueryFactory> queryMocked;
+    MockedStatic<CommandFactory> commandMocked;
     EventHandlerVisitorTest() {
-        MockCommandFactory.completeRegistration();
-        MockQueryFactory.completeRegistration();
-        CommandFactory.setProvider(new MockProvider("Mock"));
-        MockQueryFactory.setProvider(new MockProvider("Mock"));
-    }
-    @Test
-    void visitDataEvent() throws Exception {
-        AddTermEvent event = new AddTermEvent("OOP", "Object Oriented", null);
-        EventHandlerVisitor visitor = new EventHandlerVisitor();
-        visitor.visitDataEvent(event);
-        assertEquals(false, event.getResult().getStatus());
+        try {
+            queryMocked = Mockito.mockStatic(QueryFactory.class);
+            queryMocked.when(QueryFactory::instance).thenReturn(Mockito.mock(QueryFactory.class));
+        } catch (Exception e) {}
+        try {
+            commandMocked = Mockito.mockStatic(CommandFactory.class);
+            commandMocked.when((CommandFactory::instance)).thenReturn(Mockito.mock(CommandFactory.class));
+        } catch (Exception e) {}
 
-        AddTagToTermEvent event1 = new AddTagToTermEvent("OOP", "PPO", 1);
-        visitor.visitDataEvent(event1);
-        assertEquals(true, event1.getResult().getStatus());
+        queryFactory = QueryFactory.instance();
+        commandFactory = CommandFactory.instance();
     }
-
     @Test
     void visitRegisterEvent() throws Exception {
-        RegisterEvent event1 = new RegisterEvent("admin", "password", "email");
-        RegisterEvent event2 = new RegisterEvent("login", "password", "email");
-
+        //Arrange
         EventHandlerVisitor visitor = new EventHandlerVisitor();
-        assertThrows(ActionsException.class, () -> visitor.visitRegisterEvent(event1));
+        RegisterEvent newUser = new RegisterEvent("login", "password", "email");
+        RegisterEvent userExists = new RegisterEvent("admin", "password", "email");
 
-        visitor.visitRegisterEvent(event2);
-        assertEquals(true, event2.getResult().getStatus());
+        //Mock
+        ReqAuthHandler handler = Mockito.mock(ReqAuthHandler.class);
+        when(commandFactory.createReqAuthHandler()).thenReturn(handler);
+        when(handler.register(newUser)).thenReturn(new EventStatus(true));
+        when(handler.register(userExists)).thenThrow(ActionsException.class);
+
+        //Act
+        Executable registerExistingUser = () -> visitor.visitRegisterEvent(userExists);
+        visitor.visitRegisterEvent(newUser);
+
+        //Assert
+        assertTrue(newUser.getResult().getStatus());
+        assertThrows(ActionsException.class, registerExistingUser);
     }
 
     @Test
     void visitAuthorizeEvent() throws Exception {
-        AuthorizeEvent event1 = new AuthorizeEvent("login", "password");
-        AuthorizeEvent event2 = new AuthorizeEvent("unknown", "login");
-
+        //Arrange
+        User user = new User("admin", 0);
         EventHandlerVisitor visitor = new EventHandlerVisitor();
-        assertThrows(ActionsException.class, () -> visitor.visitAuthorizeEvent(event2));
 
-        visitor.visitAuthorizeEvent(event1);
-        assertEquals(new User("admin", 0).toString(), event1.getResult().toString());
+        AuthorizeEvent userExists = new AuthorizeEvent("login", "password");
+        AuthorizeEvent unknownUser = new AuthorizeEvent("unknown", "login");
+
+        //Mock
+        ReqAuthHandler handler = Mockito.mock(ReqAuthHandler.class);
+        when(commandFactory.createReqAuthHandler()).thenReturn(handler);
+        when(handler.authorize(userExists)).thenReturn(user);
+        when(handler.authorize(unknownUser)).thenThrow(ActionsException.class);
+
+        //Act
+        Executable wrongLoginData = () -> visitor.visitAuthorizeEvent(unknownUser);
+        visitor.visitAuthorizeEvent(userExists);
+
+        //Assert
+        assertEquals(user.toString(), userExists.getResult().toString());
+        assertThrows(ActionsException.class, wrongLoginData);
     }
 
     @Test
     void visitAddTermEvent() throws Exception {
-        AddTermEvent event1 = new AddTermEvent("OOP", "Object Oriented", 0);
-        AddTermEvent event2 = new AddTermEvent("Triangle", "Geometry Figure", 0);
-
+        //Arrange
         EventHandlerVisitor visitor = new EventHandlerVisitor();
-        assertThrows(ActionsException.class, () -> visitor.visitAddTermEvent(event1));
+        AddTermEvent termExists = new AddTermEvent("OOP", "Object Orie  nted", 0);
+        AddTermEvent newTerm = new AddTermEvent("Triangle", "Geometry Figure", 0);
 
-        visitor.visitAddTermEvent(event2);
-        assertTrue(event2.getResult().getStatus());
+        //Mock
+        EventHandler handler = Mockito.mock(EventHandler.class);
+        when(commandFactory.createEventHandler()).thenReturn(handler);
+        when(handler.accept(any(DataEvent.class))).thenReturn(new EventStatus(true));
+
+        TermsSearcher searcher = Mockito.mock(TermsSearcher.class);
+        when(queryFactory.createTermSearcher()).thenReturn(searcher);
+        when(searcher.termExists(any(Term.class))).thenReturn(false).thenReturn(true);
+
+        //Act
+        Executable addTermException = () -> visitor.visitAddTermEvent(termExists);
+        visitor.visitAddTermEvent(newTerm);
+
+        //Assert
+        assertTrue(newTerm.getResult().getStatus());
+        assertThrows(ActionsException.class, addTermException);
+    }
+
+    @Test
+    void visitAddLitToTermEvent() throws Exception {
+        //Arrange
+        Book book = TestObjectsFactory.emptyBook();
+        EventHandlerVisitor visitor = new EventHandlerVisitor();
+        AddLitToTermEvent event = new AddLitToTermEvent("OOP", book, 0);
+
+        //Mock
+        EventHandler handler = Mockito.mock(EventHandler.class);
+        when(commandFactory.createEventHandler()).thenReturn(handler);
+        when(handler.accept(any(DataEvent.class))).thenReturn(new EventStatus(true));
+
+        //Act
+        visitor.visitAddLitToTermEvent(event);
+
+        //Assert
+        assertTrue(event.getResult().getStatus());
+    }
+
+    @Test
+    void visitAddTagToTermEvent() throws Exception {
+        //Arrange
+        EventHandlerVisitor visitor = new EventHandlerVisitor();
+        AddTagToTermEvent event = new AddTagToTermEvent("OOP", "IT", 0);
+
+        //Mock
+        EventHandler handler = Mockito.mock(EventHandler.class);
+        when(commandFactory.createEventHandler()).thenReturn(handler);
+        when(handler.accept(any(DataEvent.class))).thenReturn(new EventStatus(true));
+
+        //Act
+        visitor.visitAddTagToTermEvent(event);
+
+        //Assert
+        assertTrue(event.getResult().getStatus());
+    }
+
+    @Test
+    void visitChangeTermLitRatingEvent() throws Exception {
+        //Arrange
+        Book book = TestObjectsFactory.emptyBook();
+        EventHandlerVisitor visitor = new EventHandlerVisitor();
+        ChangeTermLitRatingEvent event = new ChangeTermLitRatingEvent("OOP", book, 5, 0);
+
+        //Mock
+        EventHandler handler = Mockito.mock(EventHandler.class);
+        when(commandFactory.createEventHandler()).thenReturn(handler);
+        when(handler.accept(any(DataEvent.class))).thenReturn(new EventStatus(true));
+
+        //Act
+        visitor.visitChangeTermLitRatingEvent(event);
+
+        //Assert
+        assertTrue(event.getResult().getStatus());
+    }
+
+    @Test
+    void visitChangeTermTagRatingEvent() throws Exception {
+        //Arrange
+        EventHandlerVisitor visitor = new EventHandlerVisitor();
+        ChangeTermTagRatingEvent event = new ChangeTermTagRatingEvent("OOP", "IT", 5, 0);
+
+        //Mock
+        EventHandler handler = Mockito.mock(EventHandler.class);
+        when(commandFactory.createEventHandler()).thenReturn(handler);
+        when(handler.accept(any(DataEvent.class))).thenReturn(new EventStatus(true));
+
+        //Act
+        visitor.visitChangeTermTagRatingEvent(event);
+
+        //Assert
+        assertTrue(event.getResult().getStatus());
     }
 }

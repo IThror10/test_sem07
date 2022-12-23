@@ -28,26 +28,31 @@ public class JsonBuilder implements DatumBuilder {
     public DatumBuilder addInt(@NotNull String key, int value) {
         changeBegin();
         appendStringInt(key, value);
-        builder.append("}");
+        changeCommit();
         return this;
     }
 
-    public DatumBuilder addStr(@NotNull String key, @Nullable String value) {
+    public DatumBuilder addStr(@NotNull String key, @Nullable String value) throws ActionsException {
+        checkStringValue(value);
         changeBegin();
         appendStringString(key, value);
-        builder.append("}");
+        changeCommit();
         return this;
     }
 
-    public DatumBuilder addBook(@NotNull Book book) {
+    public DatumBuilder addBook(@NotNull Book book) throws ActionsException {
+        checkStringValue(book.name);
+        checkStringValue(book.type);
+        checkStringArrValues(book.authors);
+
         changeBegin();
-        builder.append("\"Book\" : ");
         appendBook(book);
-        builder.append("}");
+        changeCommit();
         return this;
     }
 
     private void appendBook(@NotNull Book book) {
+        builder.append("\"Book\" : ");
         builder.append("{");
         appendStringString("Name", book.name);
         builder.append(", ");
@@ -73,28 +78,29 @@ public class JsonBuilder implements DatumBuilder {
         if (str2 == null)
             builder.append("\" : null");
         else {
-            str2 = checkStringValue(str2);
             builder.append("\" : \"");
             builder.append(str2);
             builder.append("\"");
         }
     }
 
-
     private void appendStringArrString(@NotNull String str1, Vector<String> arr) {
         builder.append("\"");
         builder.append(str1);
         builder.append("\" : [");
-        for (int i = 0; i < arr.size(); ++i) {
-            if (i > 0)
+
+        boolean isFirst = true;
+        for (String value: arr) {
+            if (isFirst)
+                isFirst = false;
+            else
                 builder.append(", ");
 
-            if (arr.get(i) == null)
+            if (value == null)
                 builder.append("null");
             else {
-                String add = checkStringValue(arr.get(i));
                 builder.append("\"");
-                builder.append(add);
+                builder.append(value);
                 builder.append("\"");
             }
         }
@@ -103,15 +109,23 @@ public class JsonBuilder implements DatumBuilder {
 
     private void changeBegin() {
         builder.setLength(builder.length() - 1);
-        if (is_empty)
-            is_empty = false;
-        else
+        if (!is_empty)
             builder.append(", ");
     }
 
-    private String checkStringValue(@NotNull String str) {
-        str = str.replace('\"', '\'');
-        str = str.replace('\\', '|');
-        return str;
+    private void changeCommit() {
+        is_empty = false;
+        builder.append("}");
+    }
+
+    private void checkStringArrValues(Vector<String> arr) throws ActionsException {
+        for (String str : arr)
+            checkStringValue(str);
+    }
+    private void checkStringValue(@NotNull String str) throws ActionsException {
+        if (str == null)
+            return;
+        if (str.contains("\\") || str.contains("\""))
+            throw new ActionsException("String contains forbidden symbol '\\' or '\"'");
     }
 }

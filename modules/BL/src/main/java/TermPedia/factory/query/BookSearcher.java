@@ -6,7 +6,7 @@ import TermPedia.queries.books.*;
 public interface BookSearcher {
     TagBookQueryResult searchByBookName(BaseSearchBookByBookNameQuery query) throws ActionsException;
     TagBookQueryResult searchByTagName(BaseSearchBookByTagQuery query) throws ActionsException;
-    BookQueryResult searchByAuthorName(BaseSearchBookByNameQuery query) throws ActionsException;
+    BookQueryResult searchByAuthorName(BaseSearchBookByAuthorNameQuery query) throws ActionsException;
     RatedBookQueryResult searchByTermName(BaseSearchBookByTermQuery query) throws ActionsException;
     RatedBookQueryResult searchConnectedBooks(BaseSearchBookByTermQuery query) throws ActionsException;
 }

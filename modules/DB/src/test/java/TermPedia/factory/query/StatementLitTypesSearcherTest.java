@@ -1,40 +1,65 @@
 package TermPedia.factory.query;
 
 import TermPedia.dto.ActionsException;
-import TermPedia.factory.EnvProvider;
-import TermPedia.factory.query.postgres.PostgresQueryFactory;
+import TermPedia.factory.adapters.PostgresAdapter;
+import TermPedia.factory.query.postgres.PostgresLitTypesRequests;
 import TermPedia.queries.instances.types.FindLitTypesByNameQuery;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Vector;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class StatementLitTypesSearcherTest {
+    @Mock
+    Connection connection;
+    @Mock
+    Statement statement;
+    @Mock
+    ResultSet resultSet;
+
     StatementLitTypesSearcherTest() throws Exception {
-        PostgresQueryFactory.completeRegistration();
-        PostgresQueryFactory.setConnectionEstablisher(new TestPostgresQueryConnection());
-        PostgresQueryFactory.setProvider(new EnvProvider());
+        connection = Mockito.mock(Connection.class);
+        statement = Mockito.mock(Statement.class);
+        resultSet = Mockito.mock(ResultSet.class);
+
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.getResultSet()).thenReturn(resultSet);
+        when(statement.execute(any(String.class))).thenReturn(true);
     }
     @Test
     void getLitTypesByName() throws Exception {
-        LitTypesSearcher searcher = QueryFactory.instance().createLitTypesSearcher();
+        //Mock
+        when(resultSet.next()).thenReturn(true).thenReturn(false)
+                .thenReturn(true).thenReturn(true).thenReturn(false);
+        when(resultSet.getString(any(String.class))).thenReturn("book");
 
-        Vector<String> authors1 = searcher.getLitTypesByName(new FindLitTypesByNameQuery(
-                "book", 2, 0)).getLitTypes();
-
-        Vector<String> authors3 = searcher.getLitTypesByName(new FindLitTypesByNameQuery(
-                "novel", 1, 0)).getLitTypes();
-
-        assertAll(
-                () -> assertEquals("book", authors1.get(0)),
-                () -> assertEquals(1, authors1.size()),
-                () -> assertEquals("Novel", authors3.get(0)),
-                () -> assertEquals(1, authors3.size()),
-                () -> assertThrows(ActionsException.class, () -> searcher.getLitTypesByName(new FindLitTypesByNameQuery(
-                        "book", 0, 0))),
-                () -> assertThrows(ActionsException.class, () -> searcher.getLitTypesByName(new FindLitTypesByNameQuery(
-                        "book", 5, -10)))
+        //Arrange
+        StatementLitTypesSearcher searcher = new StatementLitTypesSearcher(
+                new PostgresAdapter(connection),
+                new PostgresLitTypesRequests()
         );
+        FindLitTypesByNameQuery searchBook = new FindLitTypesByNameQuery("book", 2, 0);
+        FindLitTypesByNameQuery searchAll = new FindLitTypesByNameQuery("o", 4, 0);
+        FindLitTypesByNameQuery wrongLimits = new FindLitTypesByNameQuery("d", -1, 3);
+
+        //Act
+        Vector<String> londonRes = searcher.getLitTypesByName(searchBook).getLitTypes();
+        Vector<String> allRes = searcher.getLitTypesByName(searchAll).getLitTypes();
+        Executable wrongLimitsException = () -> searcher.getLitTypesByName(wrongLimits);
+
+        //Assert
+        assertEquals(1, londonRes.size());
+        assertEquals(2, allRes.size());
+        assertEquals("book", allRes.get(0));
+        assertThrows(ActionsException.class, wrongLimitsException);
     }
 }

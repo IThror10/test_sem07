@@ -8,7 +8,7 @@ public class TagBook extends Book {
     public final double rating;
 
     public TagBook(@NotNull String name, @NotNull String type, int year, @NotNull Vector<String> authors,
-                     double rating) {
+                     double rating) throws ActionsException {
         super(name, type, year, authors);
         this.rating = rating;
     }

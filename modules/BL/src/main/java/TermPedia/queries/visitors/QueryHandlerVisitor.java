@@ -9,6 +9,7 @@ import TermPedia.queries.instances.terms.*;
 import TermPedia.queries.instances.types.*;
 
 public class QueryHandlerVisitor implements QueryVisitor {
+    @Override
     public void visitFindTermQuery(FindTermByNameQuery query) throws ActionsException {
         TermsSearcher searcher = QueryFactory.instance().createTermSearcher();
         TermQueryResult result = searcher.getTermsByName(query);

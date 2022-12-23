@@ -9,20 +9,16 @@ public class StatementSynchronizer implements ISynchronizer {
     private final ISyncAdapter updater;
     private final ISyncRequests builder;
     private boolean hasRows;
-    private String query;
     public StatementSynchronizer(@NotNull ISyncAdapter updater, @NotNull ISyncRequests builder) throws Exception {
         this.updater = updater;
         this.builder = builder;
-        this.query = builder.syncNewRowsQuery();
         this.hasRows = false;
     }
 
     @Override
     public boolean hasNewRows() throws Exception {
-        if (updater.execute(query)) {
-            hasRows = true;
-        } else
-            hasRows = false;
+        String query = builder.syncNewRowsQuery();
+        hasRows = updater.execute(query);
         return hasRows;
     }
 

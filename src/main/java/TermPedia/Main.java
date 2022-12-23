@@ -4,8 +4,6 @@ import TermPedia.events.user.*;
 import TermPedia.factory.ConstProvider;
 import TermPedia.factory.EnvProvider;
 import TermPedia.factory.command.SyncCommandFactory;
-import TermPedia.factory.command.mssql.MsSqlCommandConnection;
-import TermPedia.factory.command.mssql.MsSqlCommandFactory;
 import TermPedia.factory.command.postgres.PostgresCommandConnection;
 import TermPedia.factory.command.postgres.PostgresCommandFactory;
 import TermPedia.factory.query.IUpdater;
@@ -64,9 +62,6 @@ public class Main {
 
         PostgresQueryFactory.completeRegistration();
         PostgresQueryFactory.setConnectionEstablisher(new PostgresQueryConnection());
-
-        MsSqlCommandFactory.completeRegistration();
-        MsSqlCommandFactory.setConnectionEstablisher(new MsSqlCommandConnection());
 
         SyncCommandFactory.setProvider(new ConstProvider(commandDB));
         SyncQueryFactory.setProvider(new EnvProvider());

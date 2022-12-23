@@ -14,7 +14,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
     }
 
     @Override
-    public String authorSearchQuery(BaseSearchBookByNameQuery query) throws ActionsException {
+    public String authorSearchQuery(BaseSearchBookByAuthorNameQuery query) throws ActionsException {
         assertCorrect(query);
 
         builder.setLength(0);
@@ -22,7 +22,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(query.getName());
         builder.append("%')) as a JOIN data.authors_lit al on a.name = al.author JOIN data.lit l on l.lid = al.lid WHERE l.year >= ");
         builder.append(query.getYearStart());
-        builder.append(" and l.year <=");
+        builder.append(" and l.year <= ");
         builder.append(query.getYearEnd());
         if (query.getLitType() != null) {
             builder.append(" and l.type = ");
@@ -32,7 +32,6 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(query.getSearchAmount());
         builder.append(" OFFSET ");
         builder.append(query.getSkipAmount());
-        builder.append(";");
         return builder.toString();
     }
 
@@ -66,7 +65,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         if (!with_rating)
             builder.append(" and tag is null");
         else {
-            builder.append("and (");
+            builder.append(" and (");
             for (int i = 0; i < tags.size(); i++) {
                 if (i > 0)
                     builder.append(" or ");
@@ -75,21 +74,17 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
                 builder.append("' and rating >= ");
                 builder.append(settings.getMinRating());
             }
-            builder.append(") ");
-
-            builder.append(" GROUP BY (name, type, year, authors) HAVING count(*) = ");
+            builder.append(") GROUP BY (name, type, year, authors) HAVING count(*) = ");
             builder.append(tags.size());
 
             if (settings.isOrderByRating())
-                builder.append(" ORDER BY rating DESC ");
+                builder.append(" ORDER BY rating DESC");
         }
 
         builder.append(" LIMIT ");
         builder.append(settings.getSearchAmount());
         builder.append(" OFFSET ");
         builder.append(settings.getSkipAmount());
-        builder.append(";");
-
         return builder.toString();
     }
 
@@ -119,7 +114,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         if (!with_rating)
             builder.append(" and tag is null");
         else {
-            builder.append("and (");
+            builder.append(" and (");
             for (int i = 0; i < tags.size(); i++) {
                 if (i > 0)
                     builder.append(" or ");
@@ -128,23 +123,19 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
                 builder.append("' and rating >= ");
                 builder.append(settings.getMinRating());
             }
-            builder.append(") ");
-
-            builder.append(" GROUP BY (name, type, year, authors) HAVING count(*) = ");
+            builder.append(") GROUP BY (name, type, year, authors) HAVING count(*) = ");
             builder.append(tags.size());
 
             if (settings.isOrderByRating())
-                builder.append(" ORDER BY rating DESC ");
+                builder.append(" ORDER BY rating DESC");
         }
 
         builder.append(" LIMIT ");
         builder.append(settings.getSearchAmount());
         builder.append(" OFFSET ");
         builder.append(settings.getSkipAmount());
-        builder.append(";");
         return builder.toString();
     }
-
     @Override
     public String termSearchQuery(BaseSearchBookByTermQuery settings) throws ActionsException {
         assertCorrect(settings);
@@ -155,7 +146,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(settings.getTermName());
         builder.append("') or vector @@ plainto_tsquery('");
         builder.append(settings.getTermName());
-        builder.append("')), term_lit (LID, rating, rates_amount) as" +
+        builder.append("')), term_lit (LID, rating, rates_amount) as " +
                 "(SELECT LID, rating, rates_amount FROM (SELECT tl.LID, rating, rates_amount, " +
                 "row_number() over (partition by LID order by rating DESC) as rn FROM terms t " +
                 "JOIN data.terms_lit tl on tl.term = t.name and tl.rating >= ");
@@ -168,7 +159,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(settings.getYearEnd());
 
         if (settings.getLitType() != null) {
-            builder.append("and type = ");
+            builder.append(" and type = ");
             builder.append(settings.getLitType());
         }
 
@@ -183,7 +174,6 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(settings.getSearchAmount());
         builder.append(" OFFSET ");
         builder.append(settings.getSkipAmount());
-        builder.append(";");
         return builder.toString();
     }
 
@@ -208,7 +198,7 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(settings.getYearEnd());
 
         if (settings.getLitType() != null) {
-            builder.append("and type = ");
+            builder.append(" and type = ");
             builder.append(settings.getLitType());
 
         }
@@ -224,7 +214,6 @@ public class PostgresBookRequests extends AssertBaseSearchQuery implements Books
         builder.append(settings.getSearchAmount());
         builder.append(" OFFSET ");
         builder.append(settings.getSkipAmount());
-        builder.append(";");
         return builder.toString();
     }
 }

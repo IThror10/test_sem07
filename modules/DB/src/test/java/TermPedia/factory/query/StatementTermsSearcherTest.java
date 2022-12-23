@@ -2,66 +2,88 @@ package TermPedia.factory.query;
 
 import TermPedia.dto.ActionsException;
 import TermPedia.dto.Term;
-import TermPedia.factory.EnvProvider;
-import TermPedia.factory.query.postgres.PostgresQueryFactory;
+import TermPedia.factory.adapters.PostgresAdapter;
+import TermPedia.factory.query.postgres.PostgresTermsRequests;
 import TermPedia.queries.instances.terms.FindTermByNameQuery;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Vector;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class StatementTermsSearcherTest {
+    @Mock
+    Connection connection;
+    @Mock
+    Statement statement;
+    @Mock
+    ResultSet resultSet;
+
     StatementTermsSearcherTest() throws Exception {
-        PostgresQueryFactory.completeRegistration();
-        PostgresQueryFactory.setConnectionEstablisher(new TestPostgresQueryConnection());
-        PostgresQueryFactory.setProvider(new EnvProvider());
+        connection = Mockito.mock(Connection.class);
+        statement = Mockito.mock(Statement.class);
+        resultSet = Mockito.mock(ResultSet.class);
+
+        when(connection.createStatement()).thenReturn(statement);
+        when(statement.getResultSet()).thenReturn(resultSet);
+        when(statement.execute(any(String.class))).thenReturn(true);
     }
     @Test
     void getTermsByName() throws Exception {
-        TermsSearcher searcher = QueryFactory.instance().createTermSearcher();
+        //Mock
+        when(resultSet.next()).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(resultSet.getString("name")).thenReturn("abc");
+        when(resultSet.getString("description")).thenReturn("alpha betta gamma");
 
-        Vector<Term> terms1 = searcher.getTermsByName(new FindTermByNameQuery(
-                "pattern", 2, 0)).getTerms();
-
-        Vector<Term> terms2 = searcher.getTermsByName(new FindTermByNameQuery(
-                "objects", 3, 0)).getTerms();
-
-        Vector<Term> terms3 = searcher.getTermsByName(new FindTermByNameQuery(
-                "objects", 1, 0)).getTerms();
-
-        assertAll(
-                () -> assertEquals("Singleton", terms1.get(0).name),
-                () -> assertEquals("Single object pattern", terms1.get(0).description),
-                () -> assertEquals(1, terms1.size()),
-
-                () -> assertEquals("OOP", terms2.get(0).name),
-                () -> assertEquals("Object Oriented Programming", terms2.get(0).description),
-                () -> assertEquals("Singleton", terms2.get(1).name),
-                () -> assertEquals("Single object pattern", terms2.get(1).description),
-                () -> assertEquals(2, terms2.size()),
-
-                () -> assertEquals("OOP", terms3.get(0).name),
-                () -> assertEquals("Object Oriented Programming", terms3.get(0).description),
-                () -> assertEquals(1, terms3.size()),
-
-                () -> assertThrows(ActionsException.class, () -> searcher.getTermsByName(new FindTermByNameQuery(
-                        "object", 0, 0))),
-                () -> assertThrows(ActionsException.class, () -> searcher.getTermsByName(new FindTermByNameQuery(
-                        "object", 5, -10)))
+        //Arrange
+        StatementTermsSearcher searcher = new StatementTermsSearcher(
+                new PostgresAdapter(connection),
+                new PostgresTermsRequests()
         );
+
+        FindTermByNameQuery searchBC = new FindTermByNameQuery
+                ("bc", 3, 0);
+        FindTermByNameQuery searchException = new FindTermByNameQuery
+                ("abc", -3, 0);
+
+        //Act
+        Vector<Term> terms = searcher.getTermsByName(searchBC).getTerms();
+        Executable throwsException = () -> searcher.getTermsByName(searchException);
+
+        //Assert
+        assertEquals(2, terms.size());
+        assertEquals(new Term("abc", "alpha betta gamma").toString(),
+                terms.get(0).toString());
+        assertThrows(ActionsException.class, throwsException);
     }
 
     @Test
     void termExistsTest() throws Exception {
-        TermsSearcher searcher = QueryFactory.instance().createTermSearcher();
-
-        Term term1 = new Term("Singleton", null);
-        Term term2 = new Term("NewTermWasNotAdded", null);
-
-        assertAll(
-                () -> assertTrue(searcher.termExists(term1)),
-                () -> assertFalse(searcher.termExists(term2))
+        //Mock
+        when(resultSet.getBoolean(any(String.class))).thenReturn(true).thenReturn(false);
+        //Arrange
+        StatementTermsSearcher searcher = new StatementTermsSearcher(
+                new PostgresAdapter(connection),
+                new PostgresTermsRequests()
         );
+
+        Term termABC = new Term("abc", "description long");
+        Term termBC = new Term("bc", "other description");
+
+        //Act
+        boolean abcRes = searcher.termExists(termABC);
+        boolean bcRes = searcher.termExists(termBC);
+
+        //Assert
+        assertTrue(abcRes);
+        assertFalse(bcRes);
     }
 }

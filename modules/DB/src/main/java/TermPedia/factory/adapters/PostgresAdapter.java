@@ -4,19 +4,31 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-public class PostgresSearchAdapter implements ISearchAdapter {
+public class PostgresAdapter implements ISyncAdapter, ISearchAdapter{
     protected final Connection connection;
     protected ResultSet resultSet;
+    private boolean updatable;
 
-    public PostgresSearchAdapter(Connection connection) {
+    public PostgresAdapter(Connection connection) {
         this.connection = connection;
         this.resultSet = null;
+        this.updatable = false;
     }
 
+    public PostgresAdapter(Connection connection, boolean updatable) {
+        this.connection = connection;
+        this.resultSet = null;
+        this.updatable = updatable;
+    }
     @Override
-    public boolean execute(String sql) throws Exception {
-        Statement statement = connection.createStatement();
-        boolean result = statement.execute(sql);
+    public boolean execute(String query) throws Exception {
+        Statement statement;
+        if (updatable)
+            statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        else
+            statement = connection.createStatement();
+
+        boolean result = statement.execute(query);
         resultSet = statement.getResultSet();
         return result;
     }
@@ -44,5 +56,11 @@ public class PostgresSearchAdapter implements ISearchAdapter {
     @Override
     public double getDouble(String key) throws Exception {
         return resultSet.getDouble(key);
+    }
+
+    @Override
+    public void updateBoolean(String key, boolean value) throws Exception {
+        resultSet.updateBoolean(key, value);
+        resultSet.updateRow();
     }
 }

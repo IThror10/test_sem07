@@ -32,7 +32,7 @@ public class PostgresTermsRequests extends AssertByNameGetSettings implements Te
     @Override
     public String termsExists(Term term) {
         builder.setLength(0);
-        builder.append("SELECT EXISTS (SELECT name FROM data.terms WHERE name ='");
+        builder.append("SELECT EXISTS (SELECT name FROM data.terms WHERE name = '");
         builder.append(term.name);
         builder.append("');");
         return builder.toString();

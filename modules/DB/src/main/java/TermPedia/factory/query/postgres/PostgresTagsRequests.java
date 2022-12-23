@@ -35,7 +35,6 @@ public class PostgresTagsRequests extends AssertByNameGetSettings implements Tag
         assertCorrect(settings);
 
         builder.setLength(0);
-
         builder.append("SELECT tt.tag, tt.rating, tt.rates_amount, CASE WHEN ttr.rating IS NULL THEN 0 ELSE ttr.rating" +
                 " END as user_rating FROM (SELECT term, tag, rating, rates_amount FROM data.terms_tags where term = '");
         builder.append(settings.getName());
@@ -51,7 +50,6 @@ public class PostgresTagsRequests extends AssertByNameGetSettings implements Tag
         builder.append(settings.getSkipAmount());
         return builder.toString();
     }
-
     @Override
     public String addTagToTermQuery(EventData data) {
         builder.setLength(0);

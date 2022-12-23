@@ -15,10 +15,4 @@ public abstract class DataEvent extends BaseEvent {
     @Override
     public EventStatus getResult() { return this.status; }
     public void setResult(EventStatus status) { this.status = status; }
-
-    @Override
-    public void acceptVisitor(EventVisitor visitor) throws ActionsException {
-        visitor.visitDataEvent(this);
-    }
-
 }

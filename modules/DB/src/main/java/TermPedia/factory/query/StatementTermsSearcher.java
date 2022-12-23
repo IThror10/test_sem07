@@ -3,7 +3,6 @@ package TermPedia.factory.query;
 import TermPedia.dto.ActionsException;
 import TermPedia.dto.Term;
 import TermPedia.factory.adapters.ISearchAdapter;
-import TermPedia.factory.query.TermsSearcher;
 import TermPedia.factory.query.common.TermsRequests;
 import TermPedia.queries.instances.IByNameGetSettings;
 import TermPedia.queries.instances.terms.TermQueryResult;

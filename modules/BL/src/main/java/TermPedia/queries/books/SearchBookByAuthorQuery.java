@@ -5,7 +5,7 @@ import TermPedia.queries.IQuery;
 import TermPedia.queries.visitors.QueryVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class SearchBookByAuthorQuery extends BaseSearchBookByNameQuery implements IQuery {
+public class SearchBookByAuthorQuery extends BaseSearchBookByAuthorNameQuery implements IQuery {
     private BookQueryResult result;
     public SearchBookByAuthorQuery(@NotNull String authorName, int searchAmount, int skipAmount) {
         super(authorName, searchAmount, skipAmount);
@@ -18,9 +18,7 @@ public class SearchBookByAuthorQuery extends BaseSearchBookByNameQuery implement
     }
 
     @Override
-    public BookQueryResult getResult() {
-        return result;
-    }
+    public BookQueryResult getResult() { return result; }
 
     public void setResult(BookQueryResult result) { this.result = result; }
 }

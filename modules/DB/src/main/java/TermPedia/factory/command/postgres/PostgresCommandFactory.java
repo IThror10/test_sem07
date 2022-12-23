@@ -1,8 +1,7 @@
 package TermPedia.factory.command.postgres;
 
 import TermPedia.dto.ActionsException;
-import TermPedia.factory.adapters.PostgresSearchAdapter;
-import TermPedia.factory.adapters.PostgresSyncAdapter;
+import TermPedia.factory.adapters.PostgresAdapter;
 import TermPedia.factory.command.*;
 import TermPedia.factory.command.common.*;
 
@@ -22,7 +21,7 @@ public class PostgresCommandFactory extends SyncCommandFactory {
         try {
             Connection connection = _establisher.establishEventHandlerConnection();
             return new StatementEventHandler(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresEventHandlerRequests()
             );
         } catch (Exception e) {
@@ -36,7 +35,7 @@ public class PostgresCommandFactory extends SyncCommandFactory {
         try {
             Connection connection = _establisher.establishReqAuthHandlerConnection();
             return new StatementReqAuthHandler(
-                    new PostgresSearchAdapter(connection),
+                    new PostgresAdapter(connection),
                     new PostgresReqAuthHandlerRequests()
             );
         } catch (Exception e) {
@@ -50,7 +49,7 @@ public class PostgresCommandFactory extends SyncCommandFactory {
         try {
             Connection connection = _establisher.establishSyncConnection();
             return new StatementSynchronizer(
-                    new PostgresSyncAdapter(connection),
+                    new PostgresAdapter(connection, true),
                     new PostgresSyncRequests()
             );
         } catch (Exception e) {
