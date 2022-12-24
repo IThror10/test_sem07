@@ -1,0 +1,130 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'io.qameta.allure-aggregate-report' version '2.11.1'
+    id 'io.qameta.allure-adapter' version '2.11.1'
+}
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    archiveBaseName.set('TermPediaProject')
+    archiveVersion.set('0.0.1')
+    archiveClassifier.set('SNAPSHOT')
+    manifest {
+        attributes "Main-Class": "TermPedia.Main"
+    }
+}
+
+run.standardInput = System.in
+run.configure {
+    environment "QueryFactory", queryDBMS
+    environment "CommandFactory", commandDBMS
+}
+
+application {
+    mainClass = 'TermPedia.Main'
+}
+
+
+def blModule = project(':modules:BL')
+def dbModule = project(':modules:DB')
+def guiModule = project(':modules:GUI')
+
+configure([blModule, dbModule, guiModule]) {
+    apply(plugin: 'java')
+    apply(plugin: 'idea')
+    apply(plugin: 'io.spring.dependency-management')
+    apply(plugin: 'io.qameta.allure-adapter')
+
+    sourceCompatibility = JavaVersion.VERSION_18
+
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:2.5.4'
+        }
+    }
+
+    allure {
+        adapter {
+            frameworks {
+                junit5
+                junit4
+            }
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+
+//        compile group: 'org.mockito', name: 'mockito-core', version: '2.22.0'
+        implementation 'org.jetbrains:annotations:23.0.0'
+
+//        testImplementation 'org.jmockit:jmockit:1.49'
+        testImplementation 'net.bytebuddy:byte-buddy:1.12.20'
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+//        testImplementation 'org.mockito:mockito-core:4.10.0'
+        testImplementation 'org.mockito:mockito-inline:4.10.0'
+        testImplementation 'org.mockito:mockito-junit-jupiter:4.10.0'
+
+        testImplementation 'io.qameta.allure:allure-junit5:2.12.1'
+        testImplementation 'io.qameta.allure:allure-commandline:2.12.1'
+        testImplementation 'io.qameta.allure:allure-assertj:2.12.1'
+        testImplementation 'io.qameta.allure:allure-rest-assured:2.12.1'
+        testImplementation 'io.qameta.allure:allure-java-commons:2.12.1'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}
+
+configure(dbModule) {
+    dependencies {
+        implementation postgresVersion
+        implementation project(':modules:BL')
+    }
+}
+
+configure(guiModule) {
+    dependencies {
+        implementation project(':modules:BL')
+    }
+}
+
+configurations.allureAggregateReport.dependencies.clear()
+dependencies {
+    implementation blModule
+    implementation dbModule
+    implementation guiModule
+
+    allureAggregateReport blModule
+    allureAggregateReport dbModule
+}
+
+tasks.create("unitTests").configure {
+    blModule.test.configure {
+        ignoreFailures = true
+    }
+
+    dbModule.test.configure {
+        ignoreFailures = true
+    }
+    dependsOn(dbModule.test)
+    dependsOn(blModule.test)
+}
+
+tasks.create("createAllureReport") {
+    dependsOn(unitTests)
+
+    allureAggregateReport.configure {
+        setProperty("clean", true)
+    }
+    finalizedBy(allureAggregateReport)
+}

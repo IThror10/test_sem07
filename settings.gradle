@@ -1,0 +1,5 @@
+rootProject.name = 'test_sem07'
+
+include(':modules:BL')
+include(':modules:DB')
+include(':modules:GUI')

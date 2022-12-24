@@ -1,0 +1,67 @@
+buildscript {
+    configurations {
+        driver
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath postgresVersion
+        classpath mssqlVersion
+        classpath 'org.apache.groovy:groovy-sql:4.0.4'
+    }
+}
+
+
+apply from: "dbTasks.gradle"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    driver postgresVersion
+    driver mssqlVersion
+    implementation postgresVersion
+    implementation mssqlVersion
+}
+
+test.configure {
+    environment "CommandFactory", commandDBMS
+    environment "QueryFactory", queryDBMS
+}
+
+
+// Postgres Command DB
+if (commandDBMS == "postgres") {
+    build.dependsOn.add("initPostgresCommandDB")
+    test.dependsOn.add("initTestPostgresCommandDB")
+
+    if (createTestPostgresCommandDB.state.failure == null) {
+        test.finalizedBy("dropTestPostgresCommandDB")
+    }
+}
+
+// MsSql Command DB
+if (commandDBMS == "mssql") {
+    build.dependsOn.add("initMsSqlCommandDB")
+    test.dependsOn.add("initTestMsSqlCommandDB")
+
+    if (createTestMsSqlCommandDB.state.failure == null) {
+        test.finalizedBy("dropTestMsSqlCommandDB")
+    }
+}
+
+// Postgres Query DB
+if (queryDBMS == "postgres") {
+    build.dependsOn.add("initPostgresQueryDB")
+    test.dependsOn.add("initTestPostgresQueryDB")
+
+    if (createPostgresQueryDB.state.failure == null) {
+        test.finalizedBy("dropTestPostgresQueryDB")
+    }
+}
+
+
